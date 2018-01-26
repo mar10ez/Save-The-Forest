@@ -5,65 +5,155 @@ using UnityEngine;
 
 public abstract class MovingObject : MonoBehaviour {
 
-	public float acceleration = 5f;
-	public float maxSpeed = 20f; // Max speed of the character
-	public float speed = 0f;
-	public float jumpSpeed = 5f;
-	public LayerMask blockingLayer; // The blocking layer contains all objects that might block a moving unit
+    public float acceleration = 5f; // how quickly the character accelerates
+    public float maxMoveSpeed = 20f; // Max speed of the character
+    public float maxCrouchSpeed = 10f;
+    public float maxRollSpeed = 25f; // Max speed of the character while rolling
+    public float maxVerticalSpeed = 10f; // how quickly the y coordinate of the character can change
+    public float jumpSpeed = 5f; // How much force is applied when the character jumps
+    public int rollLength = 5; // how many frames a roll lasts
 
-	//private BoxCollider2D boxCollider; // Declare a variable for the box collider of the moving object
-	private Rigidbody2D rb2d; // Declare a variable for the rigidbody of the moving object
+    public LayerMask groundLayer; // The ground layers contains all terrain that the player might touch
 
-	// Use this for initialization
-	protected virtual void Start () {
-		//boxCollider = GetComponent<BoxCollider2D>(); // Get the box collider componenet
-		rb2d = GetComponent<Rigidbody2D>(); // Get the rigidbody component
-	}
 
-	void FixedUpdate() {
-		float moveHorizontal = Input.GetAxis ("Horizontal");
-		float moveVertical = 0f;
+    //private BoxCollider2D boxCollider; // Declare a variable for the box collider of the moving object
+    private Rigidbody2D rb2d; // Declare a variable for the rigidbody of the moving object
+    private Transform groundCheck;
+    private bool grounded = false;
+    private bool rolling = false;
+    private int rollTimer = 0;
+    private bool crouching = false;
 
-		if (Input.GetButtonDown ("Jump") && rb2d.transform.position.y < 1f) {
-			Debug.Log ("Jump button pressed");
-			moveVertical = jumpSpeed;
-		}
+    // Use this for initialization
+    protected virtual void Start() {
+        //boxCollider = GetComponent<BoxCollider2D>(); // Get the box collider componenet
+        rb2d = GetComponent<Rigidbody2D>(); // Get the rigidbody component
+        groundCheck = transform.Find("groundCheck");
 
-		Vector2 movement = new Vector2 (moveHorizontal, moveVertical);
+        // The bitshift gets the bitmask of the layer. This checks only the Ground layer
+        // The opposite of this is ~groundLayer, which checks all layers except the Ground layer.
+        // More info at https://docs.unity3d.com/Manual/Layers.html
+        groundLayer = 1 << LayerMask.NameToLayer("Ground");
+    }
 
-		rb2d.AddForce (movement * acceleration); // add the current movement force to the player
-		if(Math.Abs(rb2d.velocity.x) > maxSpeed)
-		{
-			
-			if (rb2d.velocity.x < 0f)
-				rb2d.velocity = new Vector2 (-maxSpeed, rb2d.velocity.y);
-			else if (rb2d.velocity.x > 0f) 
-				rb2d.velocity = new Vector2 (maxSpeed, rb2d.velocity.y);
-			
-			//rb2d.velocity = rb2d.velocity.normalized * maxSpeed; // If the player has passed the max speed, decrease to max speed
-		}
-	}
-	/**
-	protected bool Move(int xDir, int yDir, out RaycastHit2D hit)
-	{
-		Vector2 start = transform.position; // The start is the current position of the object
-		Vector2 end = start + new Vector2(xDir, yDir); // The end is the current position, plus the move they make
+    void FixedUpdate() {
+        float moveHorizontal = Input.GetAxis("Horizontal");
+        float moveVertical = 0f;
 
-		boxCollider.enabled = false; // disable the object's collider so it doesn't detect itself as a collision
-		hit = Physics2D.Linecast(start, end, blockingLayer); // check for any collisions between the start and the end point, but only in the blocking layer because that's where collision objects are.
-		boxCollider.enabled = true; // re-enable the object's collider
+        grounded = isGrounded();
 
-		if (hit.transform == null) // If there were no collisions, then the object is able to move
-		{
-			StartCoroutine(SmoothMovement(end));
-			return true;
-		}
+        if (Input.GetButtonDown("Jump") && grounded && !rolling)
+        {
+            moveVertical = jumpSpeed;
+        }
 
-		return false; // If there were collisions, then the object can't move
+        roll();
 
-	}
-	**/
+        if (Input.GetButtonDown("Crouch") && grounded && !rolling)
+        {
+            crouching = true;
+            transform.position = new Vector2(transform.position.x, transform.position.y - .5f);
+        }
 
-	//protected abstract void OnCantMove<T>(T component) // A function that tells the object what to do if it can't move. This will be unique depending on the unit type, so it needs to be abstract.
-	//	where T : Component;
+        if (crouching)
+        {
+            transform.localScale = new Vector2(1f, .5f);
+        }
+
+        if(crouching && (Input.GetButtonUp("Crouch") || !grounded))
+        {
+            crouching = false;
+            transform.localScale = new Vector2(1f, 1f);
+        }
+
+        Vector2 movement = new Vector2(moveHorizontal, moveVertical);
+
+        rb2d.AddForce(movement * acceleration); // add the current movement force to the player
+        if (Math.Abs(rb2d.velocity.x) > maxCrouchSpeed && crouching)
+        {
+            limitSpeed("x", rb2d, maxCrouchSpeed);
+        }
+        // limit speed if moving faster than max speed and not rolling
+        else if (Math.Abs(rb2d.velocity.x) > maxMoveSpeed && !rolling)
+        {
+            limitSpeed("x", rb2d, maxMoveSpeed);
+        }
+        // limit speed if rolling faster than max roll speed
+        else if (Math.Abs(rb2d.velocity.x) > maxRollSpeed)
+        {
+            limitSpeed("x", rb2d, maxRollSpeed);
+        }
+
+        // limit speed if moving faster than max vertical speed
+        if (Math.Abs(rb2d.velocity.y) > maxVerticalSpeed)
+        {
+            limitSpeed("y", rb2d, maxVerticalSpeed);
+        }
+    }
+
+    // Function to limit the speed of the character if they move too fast in any direction.
+    void limitSpeed(String dimension, Rigidbody2D rb2d, float maxSpeed)
+    // The arguments are dimension (either "x" or "y"), the rigidbody of the character, and the maxSpeed. This max speed can be the max air speed, ground speed, or rolling speed
+    {
+        if (dimension == "x")
+        {
+            // If the velocity is negative, then set it to the negative limit of the velocity.
+            if (rb2d.velocity.x < 0f)
+            // Since it's the x velocity that's too high, we adjust it while leaving the y velocity alone.
+                rb2d.velocity = new Vector2(-maxSpeed, rb2d.velocity.y);
+            // otherwise it's positive.
+            else if (rb2d.velocity.x > 0f)
+                rb2d.velocity = new Vector2(maxSpeed, rb2d.velocity.y);
+        }
+        else if (dimension == "y")
+        {
+            if (rb2d.velocity.y < 0f)
+                rb2d.velocity = new Vector2(-maxSpeed, rb2d.velocity.y);
+            else if (rb2d.velocity.y > 0f)
+                rb2d.velocity = new Vector2(maxSpeed, rb2d.velocity.y);
+        }
+        else
+        {
+            throw new Exception("The limit speed function was called with a dimension that isn't x or y");
+        } 
+    }
+
+    void roll()
+    {
+        // If the roll button is pressed and the character is grounded and the character isn't already rolling, then start the rolling timer and start rolling
+        if ((Input.GetButtonDown("Roll") && grounded && !rolling && !crouching))
+        {
+            rollTimer = rollLength;
+            rolling = true;
+        }
+
+        // If the character is rolling
+        if (rolling)
+        {
+            // decrease roll timer by one
+            rollTimer -= 1;
+
+            // If the player is in the air, we want to stop rolling
+            if (!grounded)
+                rollTimer = 0;
+
+            // 
+            if (rollTimer == 0)
+                rolling = false;
+        }
+    }
+
+    bool isGrounded()
+    {
+        Vector2 startPosition = rb2d.transform.position;
+        Vector2 endPosition = new Vector2(rb2d.transform.position.x, rb2d.transform.position.y - 1);
+
+        RaycastHit2D hit = Physics2D.Linecast(startPosition, endPosition, groundLayer);
+
+        if (hit.collider != null)
+        {
+            return true;
+        }
+        return false;
+    }
 }
