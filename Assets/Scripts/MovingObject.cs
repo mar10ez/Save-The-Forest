@@ -20,6 +20,7 @@ public abstract class MovingObject : MonoBehaviour {
     private Rigidbody2D rb2d; // Declare a variable for the rigidbody of the moving object
     private BoxCollider2D boxCollider;
     private Transform groundCheck;
+    private Animator animator;
     private bool grounded = false;
     private bool rolling = false;
     private int rollTimer = 0;
@@ -31,19 +32,26 @@ public abstract class MovingObject : MonoBehaviour {
         rb2d = GetComponent<Rigidbody2D>(); // Get the rigidbody component
         boxCollider = GetComponent<BoxCollider2D>();
         groundCheck = transform.Find("groundCheck");
+        animator = GetComponent<Animator>();
 
         // The bitshift gets the bitmask of the layer. This checks only the Ground layer
         // The opposite of this is ~groundLayer, which checks all layers except the Ground layer.
         // More info at https://docs.unity3d.com/Manual/Layers.html
         groundLayer = 1 << LayerMask.NameToLayer("Ground");
+        //groundLayer = ~groundLayer;
     }
 
     void FixedUpdate() {
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = 0f;
-
         grounded = isGrounded();
-        //Debug.Log(grounded);
+
+        if (moveHorizontal != 0 && grounded && !crouching)
+            animator.SetBool("running", true);
+        else
+            animator.SetBool("running", false);
+
+        Debug.Log(animator.GetBool("running"));
 
         if (Input.GetButtonDown("Jump") && grounded && !rolling)
         {
@@ -186,7 +194,6 @@ public abstract class MovingObject : MonoBehaviour {
     {
         Vector2 startPosition = rb2d.transform.position;
         Vector2 endPosition = new Vector2(rb2d.transform.position.x, rb2d.transform.position.y - 1.35f);
-        Debug.Log(boxCollider.size.y / 2f);
         RaycastHit2D hit = Physics2D.Linecast(startPosition, endPosition, groundLayer);
 
         if (hit.collider != null)
