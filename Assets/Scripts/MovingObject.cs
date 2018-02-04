@@ -7,11 +7,12 @@ public abstract class MovingObject : MonoBehaviour {
 
     public float acceleration = 5f; // how quickly the character accelerates
     public float maxMoveSpeed = 20f; // Max speed of the character
-    public float maxCrouchSpeed = 10f;
+    public float maxsneakSpeed = 10f;
     public float maxRollSpeed = 25f; // Max speed of the character while rolling
     public float maxVerticalSpeed = 10f; // how quickly the y coordinate of the character can change
     public float jumpSpeed = 5f; // How much force is applied when the character jumps
-    public int rollLength = 5; // how many frames a roll lasts
+    public int rollLength = 41; // how many frames a roll lasts
+    public int attackLength = 10;
 
     public LayerMask groundLayer; // The ground layers contains all terrain that the player might touch
 
@@ -23,8 +24,12 @@ public abstract class MovingObject : MonoBehaviour {
     private Animator animator;
     private bool grounded = false;
     private bool rolling = false;
-    private int rollTimer = 0;
-    private bool crouching = false;
+    private bool running = false;
+    private int rollTimer = 0; // timer to tell when the roll is over
+    private bool sneaking = false; // whether the player is sneaking
+    private bool attacking = false; // whether the player is attacking
+    private int attackTimer = 0; // timer to tell when the attack is over
+    private float moveHorizontal = 0f;
 
     // Use this for initialization
     protected virtual void Start() {
@@ -44,14 +49,24 @@ public abstract class MovingObject : MonoBehaviour {
     void FixedUpdate() {
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = 0f;
+
+        if (moveHorizontal != 0)
+            running = true;
+        else
+            running = false;
+
+        // Make the player character face the direction it's moving
+        if (moveHorizontal > 0)
+            transform.localScale = new Vector2(1, transform.localScale.y);
+        else if (moveHorizontal < 0)
+            transform.localScale = new Vector2(-1, transform.localScale.y);
+
         grounded = isGrounded();
 
-        if (moveHorizontal != 0 && grounded && !crouching)
+        if (moveHorizontal != 0 && grounded && !sneaking)
             animator.SetBool("running", true);
         else
             animator.SetBool("running", false);
-
-        Debug.Log(animator.GetBool("running"));
 
         if (Input.GetButtonDown("Jump") && grounded && !rolling)
         {
@@ -59,58 +74,90 @@ public abstract class MovingObject : MonoBehaviour {
         }
 
         roll();
+        attack();
+        sneak();
 
-        if (Input.GetButtonDown("Crouch") && grounded && !rolling)
+        Vector2 movement = new Vector2(moveHorizontal, moveVertical);
+        rb2d.AddForce(movement * acceleration); // add the current movement force to the player
+
+        if (Math.Abs(rb2d.velocity.x) > maxsneakSpeed && sneaking)
         {
-            crouching = true;
+            limitSpeed("x", rb2d, maxsneakSpeed);
+        }
+        // limit speed if moving faster than max speed and not rolling
+        else if (Math.Abs(rb2d.velocity.x) > maxMoveSpeed && !rolling)
+        {
+            limitSpeed("x", rb2d, maxMoveSpeed);
+        }
+        // limit speed if rolling faster than max roll speed
+        else if (Math.Abs(rb2d.velocity.x) > maxRollSpeed)
+        {
+            limitSpeed("x", rb2d, maxRollSpeed);
+        }
+
+        // limit speed if moving faster than max vertical speed
+        if (Math.Abs(rb2d.velocity.y) > maxVerticalSpeed)
+        {
+            limitSpeed("y", rb2d, maxVerticalSpeed);
+        }
+  
+    }
+
+    void sneak()
+    {
+        if (Input.GetButtonDown("Sneak") && grounded && !rolling)
+        {
+            sneaking = true;
             transform.position = new Vector2(transform.position.x, transform.position.y - .5f);
         }
 
-        if (crouching)
+        if (sneaking)
         {
-            transform.localScale = new Vector2(1f, .5f);
+            animator.SetBool("crouching", true);
         }
 
-        if(crouching && (Input.GetButtonUp("Crouch") || !grounded))
+        if (sneaking && (Input.GetButtonUp("Sneak") || !grounded))
         {
-            crouching = false;
-            transform.localScale = new Vector2(1f, 1f);
+            sneaking = false;
+            animator.SetBool("crouching", false);
         }
 
-        if (false)
-        {
-            finalCollisionCheck();
-            rb2d.velocity = new Vector2(0, moveVertical);
-            return;
-        }
-        else
-        {
-            Vector2 movement = new Vector2(moveHorizontal, moveVertical);
-            rb2d.AddForce(movement * acceleration); // add the current movement force to the player
+        if (!running && grounded && sneaking)
+            animator.SetBool("sneaking", true);
+        else if (running && grounded && sneaking)
+            animator.SetBool("sneaking", false);
+    }
 
-            if (Math.Abs(rb2d.velocity.x) > maxCrouchSpeed && crouching)
-            {
-                limitSpeed("x", rb2d, maxCrouchSpeed);
-            }
-            // limit speed if moving faster than max speed and not rolling
-            else if (Math.Abs(rb2d.velocity.x) > maxMoveSpeed && !rolling)
-            {
-                limitSpeed("x", rb2d, maxMoveSpeed);
-            }
-            // limit speed if rolling faster than max roll speed
-            else if (Math.Abs(rb2d.velocity.x) > maxRollSpeed)
-            {
-                limitSpeed("x", rb2d, maxRollSpeed);
-            }
-
-            // limit speed if moving faster than max vertical speed
-            if (Math.Abs(rb2d.velocity.y) > maxVerticalSpeed)
-            {
-                limitSpeed("y", rb2d, maxVerticalSpeed);
-            }
+    void attack()
+    {
+        // If the roll button is pressed and the character is grounded and the character isn't already rolling, then start the rolling timer and start rolling
+        if ((Input.GetButtonDown("Attack") && grounded && !rolling && !sneaking && !attacking))
+        {
+            animator.SetBool("attacking1", true);
+            attackTimer = attackLength;
+            Debug.Log(attackTimer);
+            attacking = true;
         }
 
-  
+        // If the character is attacking
+        if (attacking)
+        {
+            // decrease attack timer by one
+            attackTimer -= 1;
+
+            // If the player is in the air, we want to stop attacking
+            if (!grounded)
+                attackTimer = 0;
+
+            // if the roll timer is 0, then stop attacking
+            if (attackTimer == 0)
+            {
+                attacking = false;
+                animator.SetBool("attacking1", false);
+            }
+
+        }
+
     }
 
     // Function to limit the speed of the character if they move too fast in any direction.
@@ -144,8 +191,9 @@ public abstract class MovingObject : MonoBehaviour {
     void roll()
     {
         // If the roll button is pressed and the character is grounded and the character isn't already rolling, then start the rolling timer and start rolling
-        if ((Input.GetButtonDown("Roll") && grounded && !rolling && !crouching))
+        if ((Input.GetButtonDown("Roll") && grounded && !rolling && !sneaking && !attacking))
         {
+            animator.SetBool("rolling", true);
             rollTimer = rollLength;
             rolling = true;
         }
@@ -160,34 +208,35 @@ public abstract class MovingObject : MonoBehaviour {
             if (!grounded)
                 rollTimer = 0;
 
-            // 
+            // if the roll timer is 0, then stop rolling
             if (rollTimer == 0)
+            {
                 rolling = false;
+                animator.SetBool("rolling", false);
+            }
+                
         }
     }
 
-    private void finalCollisionCheck()
+    void climbWall()
     {
-        // Get the velocity
-        Vector2 moveDirection = new Vector2(rb2d.velocity.x * Time.fixedDeltaTime + 1, 0.2f);
+        if (!touchingWall())
+            return;
 
-        // Get bounds of Collider
-        var bottomRight = new Vector2(boxCollider.bounds.max.x, boxCollider.bounds.max.y);
-        var topLeft = new Vector2(boxCollider.bounds.min.x, boxCollider.bounds.min.y);
+        float moveVertical = Input.GetAxis("Vertical");
+    }
 
-        // Move collider in direction that we are moving
-        bottomRight += moveDirection;
-        topLeft += moveDirection;
+    bool touchingWall()
+    {
+        Vector2 startPosition = rb2d.transform.position;
+        Vector2 endPosition = new Vector2(rb2d.transform.position.x + 1, rb2d.transform.position.y);
+        RaycastHit2D hit = Physics2D.Linecast(startPosition, endPosition, groundLayer);
 
-        // Check if the body's current velocity will result in a collision
-        if (Physics2D.OverlapArea(topLeft, bottomRight, groundLayer))
+        if (hit.collider != null)
         {
-            Debug.Log(rb2d.velocity.y);
-            // If so, stop the movement
-            rb2d.velocity = new Vector2(0, rb2d.velocity.y);
+            return true;
         }
-        else
-            Debug.Log("Stop printing");
+        return false;
     }
 
     bool isGrounded()
