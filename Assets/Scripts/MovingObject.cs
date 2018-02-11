@@ -14,12 +14,12 @@ public abstract class MovingObject : MonoBehaviour {
     public float maxClimbSpeed = 1f;
     public int rollLength = 41; // how many frames a roll lasts
     public int landingLag = 10; // After landing from a jump, how long does it take before the player can move again
+    public int punchDamage = 1; // How much damage does a basic punch do
+    public int hp = 1;
     
     public LayerMask groundLayer; // The ground layers contains all terrain that the player might touch
     public LayerMask wallLayer;
 
-
-    //private BoxCollider2D playerCollider; // Declare a variable for the box collider of the moving object
     private Rigidbody2D rb2d; // Declare a variable for the rigidbody of the moving object
     private BoxCollider2D playerCollider;
     private Animator animator;
@@ -30,8 +30,11 @@ public abstract class MovingObject : MonoBehaviour {
     private int rollTimer = 0; // timer to tell when the roll is over
     private bool crouching = false;
     private bool sneaking = false; // whether the player is sneaking
-    public bool attacking = false; // whether the player is attacking
+    
     private int attackTimer = 0; // timer to tell when the attack is over
+
+    [HideInInspector]
+    public bool attacking = false; // whether the player is attacking
 
     private float moveHorizontal;
     private float moveVertical;
@@ -58,6 +61,12 @@ public abstract class MovingObject : MonoBehaviour {
     void FixedUpdate() {
         moveHorizontal = Input.GetAxis("Horizontal");
         moveVertical = 0f;
+
+        // Make the player character face the direction it's moving
+        if (moveHorizontal > 0)
+            transform.localScale = new Vector2(1, transform.localScale.y);
+        else if (moveHorizontal < 0)
+            transform.localScale = new Vector2(-1, transform.localScale.y);
 
         grounded = isGrounded(); // Check if the player is grounded, this is one of the first things that should happen in a frame
         run();
@@ -112,13 +121,18 @@ public abstract class MovingObject : MonoBehaviour {
             rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
             running = false;
         if (moveHorizontal == 0)
-        
+        {
 
+        }
+        
+        /**
         // Make the player character face the direction it's moving
         if (moveHorizontal > 0)
             transform.localScale = new Vector2(1, transform.localScale.y);
         else if (moveHorizontal < 0)
             transform.localScale = new Vector2(-1, transform.localScale.y);
+        **/
+
 
         if (moveHorizontal != 0 && grounded && !sneaking)
             animator.SetBool("running", true);
