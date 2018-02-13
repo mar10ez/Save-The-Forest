@@ -1,13 +1,13 @@
 fileFormatVersion: 2
-guid: 1eabc654ed6679c4ab45ec84505cd1ba
-timeCreated: 1517507056
+guid: 6004265f9c151c241b51a91a58e64052
+timeCreated: 1518388624
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
-    21300000: Elf_idle_sheet_0
-    21300002: Elf_idle_sheet_1
-    21300004: Elf_idle_sheet_3
-    21300006: Elf_idle_sheet_5
+    21300000: stealth attack sheet_0
+    21300002: stealth attack sheet_1
+    21300004: stealth attack sheet_2
+    21300006: stealth attack sheet_3
   externalObjects: {}
   serializedVersion: 4
   mipmaps:
@@ -61,46 +61,46 @@ TextureImporter:
   textureFormatSet: 0
   platformSettings:
   - buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
   - buildTarget: Standalone
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
   - buildTarget: Android
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
   - buildTarget: Windows Store Apps
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
   - buildTarget: WebGL
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -109,13 +109,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Elf_idle_sheet_0
+      name: stealth attack sheet_0
       rect:
         serializedVersion: 2
-        x: 24
-        y: 408
-        width: 106
-        height: 262
+        x: 0
+        y: 5
+        width: 130
+        height: 208
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -123,13 +123,13 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
     - serializedVersion: 2
-      name: Elf_idle_sheet_1
+      name: stealth attack sheet_1
       rect:
         serializedVersion: 2
-        x: 239
-        y: 405
-        width: 107
-        height: 261
+        x: 196
+        y: 4
+        width: 117
+        height: 214
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -137,13 +137,13 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
     - serializedVersion: 2
-      name: Elf_idle_sheet_3
+      name: stealth attack sheet_2
       rect:
         serializedVersion: 2
-        x: 431
-        y: 408
-        width: 108
-        height: 262
+        x: 362
+        y: 12
+        width: 179
+        height: 214
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -151,13 +151,13 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
     - serializedVersion: 2
-      name: Elf_idle_sheet_5
+      name: stealth attack sheet_3
       rect:
         serializedVersion: 2
-        x: 616
-        y: 408
-        width: 107
-        height: 265
+        x: 581
+        y: 0
+        width: 208
+        height: 212
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

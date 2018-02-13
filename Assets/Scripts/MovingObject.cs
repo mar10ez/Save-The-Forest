@@ -5,44 +5,48 @@ using UnityEngine;
 
 public abstract class MovingObject : MonoBehaviour {
 
-    public float acceleration = 5f; // how quickly the character accelerates
-    public float maxMoveSpeed = 20f; // Max speed of the character
-    public float maxsneakSpeed = 10f;
-    public float maxRollSpeed = 25f; // Max speed of the character while rolling
-    public float maxVerticalSpeed = 10f; // how quickly the y coordinate of the character can change
-    public float jumpSpeed = 5f; // How much force is applied when the character jumps
+    public float acceleration = 100f; // how quickly the character accelerates
+    public float maxMoveSpeed = 7f; // Max speed of the character
+    public float maxsneakSpeed = 3f; // Mex move speed while crouching
+    public float maxRollSpeed = 10f; // Max speed of the character while rolling
+    public float maxVerticalSpeed = 20f; // how quickly the y coordinate of the character can change
+    public float jumpSpeed = 6f; // How much force is applied when the character jumps
     public float maxClimbSpeed = 1f;
-    public int rollLength = 41; // how many frames a roll lasts
-    public int attackLength = 10;
+    public int rollLength = 42; // how many frames a roll lasts
     public int landingLag = 10; // After landing from a jump, how long does it take before the player can move again
+    public int punchDamage = 1; // How much damage does a basic punch do
+    public int sneakDamage = 5; // How much damage a sneak attack does
+    public int hp = 1;
+    public float restartLevelDelay = 2f;
     
-
     public LayerMask groundLayer; // The ground layers contains all terrain that the player might touch
     public LayerMask wallLayer;
 
-
-    //private BoxCollider2D boxCollider; // Declare a variable for the box collider of the moving object
     private Rigidbody2D rb2d; // Declare a variable for the rigidbody of the moving object
-    private BoxCollider2D boxCollider;
+    private BoxCollider2D playerCollider;
     private Animator animator;
     private bool grounded = false;
     private bool rolling = false;
     private bool running = false;
     private bool climbing = false;
     private int rollTimer = 0; // timer to tell when the roll is over
-    private bool crouching = false;
+    
     private bool sneaking = false; // whether the player is sneaking
-    private bool attacking = false; // whether the player is attacking
+    
     private int attackTimer = 0; // timer to tell when the attack is over
+
+    [HideInInspector]
+    public bool attacking = false; // whether the player is attacking
+    public bool crouching = false;
 
     private float moveHorizontal;
     private float moveVertical;
 
     // Use this for initialization
     protected virtual void Start() {
-        //boxCollider = GetComponent<BoxCollider2D>(); // Get the box collider componenet
+        //playerCollider = GetComponent<BoxCollider2D>(); // Get the box collider componenet
         rb2d = GetComponent<Rigidbody2D>(); // Get the rigidbody component
-        boxCollider = GetComponent<BoxCollider2D>();
+        playerCollider = GetComponent<BoxCollider2D>();
         animator = GetComponent<Animator>();
 
         // The bitshift gets the bitmask of the layer. This checks only the Ground layer
@@ -57,9 +61,22 @@ public abstract class MovingObject : MonoBehaviour {
         moveVertical = 0f;
     }
 
+    public void damagePlayer(int damageTaken)
+    {
+        hp -= damageTaken;
+    }
+
     void FixedUpdate() {
+        die();
+
         moveHorizontal = Input.GetAxis("Horizontal");
         moveVertical = 0f;
+
+        // Make the player character face the direction it's moving
+        if (moveHorizontal > 0)
+            transform.localScale = new Vector2(1, transform.localScale.y);
+        else if (moveHorizontal < 0)
+            transform.localScale = new Vector2(-1, transform.localScale.y);
 
         grounded = isGrounded(); // Check if the player is grounded, this is one of the first things that should happen in a frame
         run();
@@ -106,18 +123,27 @@ public abstract class MovingObject : MonoBehaviour {
         }
     }
 
+    void die()
+    {
+        if (hp <= 0)
+        {
+            animator.SetTrigger("dying");
+            Invoke("Application.LoadLevel(Application.loadedLevel", restartLevelDelay);
+        }
+    }
+
     void run()
     {
         if (moveHorizontal != 0)
             running = true;
-        else
+        if (moveHorizontal == 0 && grounded)
+            rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
             running = false;
+        if (moveHorizontal == 0)
+        {
 
-        // Make the player character face the direction it's moving
-        if (moveHorizontal > 0)
-            transform.localScale = new Vector2(1, transform.localScale.y);
-        else if (moveHorizontal < 0)
-            transform.localScale = new Vector2(-1, transform.localScale.y);
+        }
+
 
         if (moveHorizontal != 0 && grounded && !sneaking)
             animator.SetBool("running", true);
@@ -127,19 +153,16 @@ public abstract class MovingObject : MonoBehaviour {
 
     void jump()
     {
-        if (animator.GetBool("jumping"))
-            animator.SetBool("jumping", false);
-
-        if (Input.GetButtonDown("Jump") && grounded && !rolling)
+        if (Input.GetButton("Jump") && grounded && !rolling)
         {
-            animator.SetBool("jumping", true);
+            animator.SetTrigger("jumping");
             moveVertical = jumpSpeed;
         }
     }
 
     void sneak()
     {
-        if (Input.GetButtonDown("Sneak") && grounded && !rolling)
+        if (Input.GetButton("Sneak") && grounded && !rolling)
         {
             crouching = true;
             transform.position = new Vector2(transform.position.x, transform.position.y - .5f);
@@ -151,7 +174,7 @@ public abstract class MovingObject : MonoBehaviour {
             animator.SetBool("sneaking", true);
         }
         
-        if (crouching && (Input.GetButtonUp("Sneak") || !grounded))
+        if (crouching && (!Input.GetButton("Sneak") || !grounded))
         {
             sneaking = false;
             animator.SetBool("sneaking", false);
@@ -164,31 +187,16 @@ public abstract class MovingObject : MonoBehaviour {
     void attack()
     {
         // If the roll button is pressed and the character is grounded and the character isn't already rolling, then start the rolling timer and start rolling
-        if ((Input.GetButtonDown("Attack") && grounded && !rolling && !sneaking && !attacking))
+        if ((Input.GetButton("Attack") && grounded && !rolling && !sneaking))
         {
-            animator.SetBool("attacking", true);
-            attackTimer = attackLength;
-            Debug.Log(attackTimer);
+            animator.SetTrigger("attacking");
             attacking = true;
         }
 
-        // If the character is attacking
-        if (attacking)
+        if ((!Input.GetButton("Attack") && attacking) || !grounded || rolling || sneaking)
         {
-            // decrease attack timer by one
-            attackTimer -= 1;
-
-            // If the player is in the air, we want to stop attacking
-            if (!grounded)
-                attackTimer = 0;
-
-            // if the roll timer is 0, then stop attacking
-            if (attackTimer == 0)
-            {
-                attacking = false;
-                animator.SetBool("attacking", false);
-            }
-
+            animator.SetBool("attacking", false);
+            attacking = false;
         }
 
     }
@@ -224,7 +232,7 @@ public abstract class MovingObject : MonoBehaviour {
     void roll()
     {
         // If the roll button is pressed and the character is grounded and the character isn't already rolling, then start the rolling timer and start rolling
-        if ((Input.GetButtonDown("Roll") && grounded && !rolling && !sneaking && !attacking))
+        if ((Input.GetButton("Roll") && grounded && !rolling && !sneaking && !attacking))
         {
             animator.SetBool("rolling", true);
             rollTimer = rollLength;
@@ -302,4 +310,5 @@ public abstract class MovingObject : MonoBehaviour {
         animator.SetBool("grounded", false);
         return false;
     }
+
 }

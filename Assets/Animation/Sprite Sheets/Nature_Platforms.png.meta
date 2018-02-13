@@ -1,13 +1,13 @@
 fileFormatVersion: 2
-guid: 1eabc654ed6679c4ab45ec84505cd1ba
-timeCreated: 1517507056
+guid: 47180e3baf3475144a5a1c74e31e6105
+timeCreated: 1517934715
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
-    21300000: Elf_idle_sheet_0
-    21300002: Elf_idle_sheet_1
-    21300004: Elf_idle_sheet_3
-    21300006: Elf_idle_sheet_5
+    21300000: Nature_Platforms_0
+    21300002: Nature_Platforms_1
+    21300004: Nature_Platforms_2
+    21300006: Nature_Platforms_3
   externalObjects: {}
   serializedVersion: 4
   mipmaps:
@@ -61,46 +61,46 @@ TextureImporter:
   textureFormatSet: 0
   platformSettings:
   - buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
   - buildTarget: Standalone
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
   - buildTarget: Android
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
   - buildTarget: Windows Store Apps
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
   - buildTarget: WebGL
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -109,13 +109,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Elf_idle_sheet_0
+      name: Nature_Platforms_0
       rect:
         serializedVersion: 2
-        x: 24
-        y: 408
-        width: 106
-        height: 262
+        x: 0
+        y: 1058
+        width: 768
+        height: 270
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -123,13 +123,13 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
     - serializedVersion: 2
-      name: Elf_idle_sheet_1
+      name: Nature_Platforms_1
       rect:
         serializedVersion: 2
-        x: 239
-        y: 405
-        width: 107
-        height: 261
+        x: 28
+        y: 699
+        width: 727
+        height: 301
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -137,13 +137,13 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
     - serializedVersion: 2
-      name: Elf_idle_sheet_3
+      name: Nature_Platforms_2
       rect:
         serializedVersion: 2
-        x: 431
-        y: 408
-        width: 108
-        height: 262
+        x: 19
+        y: 328
+        width: 729
+        height: 312
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -151,13 +151,13 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
     - serializedVersion: 2
-      name: Elf_idle_sheet_5
+      name: Nature_Platforms_3
       rect:
         serializedVersion: 2
-        x: 616
-        y: 408
-        width: 107
-        height: 265
+        x: 25
+        y: 0
+        width: 727
+        height: 270
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
